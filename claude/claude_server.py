@@ -26,7 +26,11 @@ class Trace(doubao.Trace):
 def adapt(server, strict=True):
     """Adjust an imported upstream iphone_use module for Claude Desktop."""
     doubao.adapt(server, strict, claude_text)
+    for tool in server.TOOLS:
+        if tool["name"] == "pua_screen":
+            # The flat key of the MCP Apps drafts, which a host may still read in place of ui.resourceUri.
+            tool["_meta"]["ui/resourceUri"] = server.SCREEN_URI
 
 
 if __name__ == "__main__":
-    sys.exit(doubao.main(claude_text, Trace))
+    sys.exit(doubao.main(adapt, Trace))

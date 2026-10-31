@@ -143,16 +143,20 @@ def adapt(server, strict=True, text=doubao_text):
     sys.modules[server.WDAClient.__module__].SESSION_SETTINGS.update(mjpegServerFramerate=30, mjpegScalingFactor=50)
 
 
-def main(text=doubao_text, tracer=Trace):
+def main(adapter=adapt, tracer=Trace):
     # A started server with one stale sentence beats a server that refuses to start;
     # the installer and the tests are where drift is reported.
-    adapt(iphone_use, strict=False, text=text)
+    adapter(iphone_use, strict=False)
     options = argparse.ArgumentParser(add_help=False)
     options.add_argument("--state-dir")
     state_dir = Path(iphone_use.state_directory(options.parse_known_args()[0].state_dir)).expanduser()
     trace = sys.stdin = tracer(state_dir, sys.stdin)
     try:
         return iphone_use.main()
+    except KeyboardInterrupt:
+        # How a host that sends SIGINT stops a server: an ordinary end, not a failure.
+        trace.write("interrupted")
+        raise
     except BaseException:
         trace.write("stopped", traceback.format_exc(limit=6))
         raise
