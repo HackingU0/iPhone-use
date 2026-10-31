@@ -4,7 +4,7 @@
 
 ![iPhone Use controlling a real iPhone in Codex with a live screen preview](assets/iphone-use-demo.png)
 
-Let Codex, WorkBuddy, or Doubao Work operate your real iPhone over USB. Describe a task in natural language: open apps, read screens, tap, scroll, enter text, collect lists, and watch the phone in a sidebar widget.
+Let Codex, WorkBuddy, Doubao Work, or Claude Desktop operate your real iPhone over USB. Describe a task in natural language: open apps, read screens, tap, scroll, enter text, collect lists, and watch the phone in a sidebar widget.
 
 The plugin connects to [WebDriverAgent](https://github.com/appium/WebDriverAgent) (WDA). It includes a local MCP server, setup and usage skills, and a live screen widget. It reuses healthy connections and existing builds; when element targeting fails, it guides the model to inspect a screenshot and try coordinates.
 
@@ -50,14 +50,15 @@ for me to complete them before continuing.
 
 A reconnect may be required to load newly installed tools. Apple account login, device trust, Developer Mode, and unlocking must be completed by the device owner in the system UI. The repository is currently private; GitHub access or a source package is required.
 
-## Install in WorkBuddy or Doubao Work
+## Install in WorkBuddy, Doubao Work, or Claude Desktop
 
-Both hosts can control a real iPhone over USB and show its live screen in a sidebar. They share local device configuration, WDA builds, and the operation lock, so an existing setup is reused. The requirements are macOS, full Xcode, Python, Node.js / npm, and a USB-connected iPhone; these adapters do not require Codex CLI. Anonymous usage statistics are disabled by default in both adapters.
+All three hosts can control a real iPhone over USB and show its live screen. They share local device configuration, WDA builds, and the operation lock, so an existing setup is reused. The requirements are macOS, full Xcode, Python, Node.js / npm, and a USB-connected iPhone; these adapters do not require Codex CLI. Anonymous usage statistics are disabled by default in these adapters.
 
 | Host | Run from the source directory | Connect after installation |
 | --- | --- | --- |
 | [WorkBuddy](https://github.com/zhongerxin/iPhone-use/blob/main/workbuddy/README.md) | `python3 workbuddy/install.py` | Trust `iphone_use` in Connector Management, then start a new chat |
 | [Doubao Work](https://github.com/zhongerxin/iPhone-use/blob/main/doubao/README.md) | `python3 doubao/install.py` | Add a STDIO connector using the installer output, upload both skills, then start a Local Computer task |
+| [Claude Desktop](https://github.com/zhongerxin/iPhone-use/blob/main/claude/README.md) | `python3 claude/install.py` | Upload the two skill ZIPs the installer builds in Customize > Skills, quit Claude completely (⌘Q) and reopen it, then start a new chat |
 
 Paste the matching prompt into the host running on your Mac. The assistant can perform the local installation and explain any host UI steps it cannot complete. First-time signing uses your own Apple account and development team.
 
@@ -109,13 +110,43 @@ For Apple login, trust, Developer Mode, or unlocking, explain the steps and
 wait for me. Do not copy the author's device identifiers or signing settings.
 ```
 
-If tools are missing, confirm the connector is enabled and start a new chat / Local Computer task. When both hosts use the same phone, follow the shared lock's waiting guidance. See the linked host READMEs for installation, updates, and troubleshooting.
+### Install in Claude Desktop
+
+Code execution in a Claude chat runs in a cloud sandbox and cannot run the installer on this Mac, so install from Terminal:
+
+```sh
+git clone https://github.com/zhongerxin/iPhone-use.git
+cd iPhone-use
+python3 claude/install.py
+```
+
+Or paste this prompt into the Code tab of Claude Desktop (Claude Code) or another assistant that can run commands on this Mac:
+
+```text
+Install iPhone Use on this Mac so Claude Desktop can operate my real iPhone over USB:
+https://github.com/zhongerxin/iPhone-use
+
+Read README.en.md, claude/README.md, and the installer first. Check Python,
+Node.js, npm, full Xcode, and the USB iPhone. Clone or reuse a local checkout,
+preserve existing changes, and run python3 claude/install.py from its root.
+Do not run the Codex installer. Tell me the two skill ZIP paths the installer
+prints, and the steps to upload and enable them in Claude's Customize > Skills
+and to quit Claude completely (⌘Q) and reopen it.
+```
+
+After reopening Claude, ask in a new chat:
+
+> Use iphone-use-setup to configure my USB-connected iPhone, verify READY, and show the phone screen.
+
+After READY, Claude calls `pua_screen()` once to show the live screen in the chat.
+
+If tools are missing, confirm the connector is enabled (in Claude Desktop, check Settings > Developer) and start a new chat / Local Computer task. When several hosts use the same phone, follow the shared lock's waiting guidance. See the linked host READMEs for installation, updates, and troubleshooting.
 
 ## Requirements
 
 | Requirement | Purpose |
 | --- | --- |
-| macOS and Codex, WorkBuddy, or Doubao Work | Local MCP and screen sidebar; the Codex installer also requires Codex CLI |
+| macOS and Codex, WorkBuddy, Doubao Work, or Claude Desktop | Local MCP and screen sidebar; the Codex installer also requires Codex CLI |
 | Full Xcode with first-launch setup completed | Build, sign, deploy, and run WDA; Command Line Tools alone are insufficient |
 | An Apple account and development team available in Xcode | Sign the on-device WDA Runner |
 | A real iPhone connected over USB | Trust the Mac, enable Developer Mode when required, and keep it unlocked during installation / startup |
