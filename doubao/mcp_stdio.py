@@ -55,12 +55,14 @@ class Trace:
     """
     LIMIT = 1 << 20
     EVERY = 200
+    # The state subdirectory of the host this runs under; another port that reuses this names its own.
+    HOST = "doubao"
 
     def __init__(self, state_dir, stdin):
         self.stdin = stdin
         self.frames = 0
         self.log = None
-        own = Path(state_dir) / "doubao"
+        own = Path(state_dir) / self.HOST
         try:
             if (own / "trace").exists():
                 path = own / "host.log"
@@ -122,12 +124,12 @@ class Trace:
         self.write(method, detail)
 
 
-def adapt(server, strict=True):
-    """Adjust an imported upstream iphone_use module for Doubao Work."""
-    doubao_text.adapt_server(server, strict)
+def adapt(server, strict=True, text=doubao_text):
+    """Adjust an imported upstream iphone_use module for Doubao Work, or for a host worded by text."""
+    text.adapt_server(server, strict)
     # One tool opens the screen. Upstream puts the view on READY as well, so that Codex reuses
     # one side panel; Doubao Work is told to open it with pua_screen, once.
-    upstream_uri, server.SCREEN_URI = server.SCREEN_URI, doubao_text.screen_uri(server.SCREEN_URI)
+    upstream_uri, server.SCREEN_URI = server.SCREEN_URI, text.screen_uri(server.SCREEN_URI)
     for tool in server.TOOLS:
         if tool["name"] == "pua_ready":
             tool.pop("_meta", None)
@@ -141,14 +143,14 @@ def adapt(server, strict=True):
     sys.modules[server.WDAClient.__module__].SESSION_SETTINGS.update(mjpegServerFramerate=30, mjpegScalingFactor=50)
 
 
-def main():
+def main(text=doubao_text, tracer=Trace):
     # A started server with one stale sentence beats a server that refuses to start;
     # the installer and the tests are where drift is reported.
-    adapt(iphone_use, strict=False)
+    adapt(iphone_use, strict=False, text=text)
     options = argparse.ArgumentParser(add_help=False)
     options.add_argument("--state-dir")
     state_dir = Path(iphone_use.state_directory(options.parse_known_args()[0].state_dir)).expanduser()
-    trace = sys.stdin = Trace(state_dir, sys.stdin)
+    trace = sys.stdin = tracer(state_dir, sys.stdin)
     try:
         return iphone_use.main()
     except BaseException:

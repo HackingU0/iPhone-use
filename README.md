@@ -4,7 +4,7 @@
 
 ![iPhone Use 在 Codex 中操作真实 iPhone 并实时展示手机屏幕](assets/iphone-use-demo.png)
 
-让 Codex、WorkBuddy 或豆包工作通过 USB 操作你的真实 iPhone。用自然语言描述任务，助手就能打开 App、读取页面、点击、滚动、输入文字、整理列表，并在侧边栏展示手机屏幕。
+让 Codex、WorkBuddy、豆包工作或 Claude 桌面端通过 USB 操作你的真实 iPhone。用自然语言描述任务，助手就能打开 App、读取页面、点击、滚动、输入文字、整理列表，并在侧边栏展示手机屏幕。
 
 iPhone Use 使用 [WebDriverAgent](https://github.com/appium/WebDriverAgent)（WDA）与 iPhone 通信，包含本地 MCP 服务、安装与使用技能，以及实时屏幕 widget。它优先复用现有连接与构建；控件定位失败时，指导模型查看截图并尝试坐标点击。
 
@@ -49,14 +49,15 @@ https://github.com/zhongerxin/iPhone-use
 
 仓库目前为私有，需要有 GitHub 访问权限，或者使用已取得的源代码包。
 
-## 在 WorkBuddy 和豆包工作中安装
+## 在 WorkBuddy、豆包工作和 Claude 桌面端中安装
 
-两者都支持通过 USB 操作真实 iPhone，并在侧边栏显示实时画面；共用本机的设备配置、WDA 构建和操作锁，已配置过的手机优先复用。依赖仍是 macOS、完整 Xcode、Python、Node.js / npm 和 USB iPhone，安装这两个适配版无需 Codex CLI。适配版默认关闭匿名使用统计。
+三者都支持通过 USB 操作真实 iPhone，并显示实时画面；共用本机的设备配置、WDA 构建和操作锁，已配置过的手机优先复用。依赖仍是 macOS、完整 Xcode、Python、Node.js / npm 和 USB iPhone，安装这些适配版无需 Codex CLI。适配版默认关闭匿名使用统计。
 
 | 宿主 | 在源码目录运行 | 安装后的接入 |
 | --- | --- | --- |
 | [WorkBuddy](https://github.com/zhongerxin/iPhone-use/blob/main/workbuddy/README.md) | `python3 workbuddy/install.py` | 在「连接器管理」信任 `iphone_use`，新开会话 |
 | [豆包工作](https://github.com/zhongerxin/iPhone-use/blob/main/doubao/README.md) | `python3 doubao/install.py` | 按安装器输出新建 STDIO 连接器，上传两个技能，新开「本地电脑」任务 |
+| [Claude 桌面端](https://github.com/zhongerxin/iPhone-use/blob/main/claude/README.md) | `python3 claude/install.py` | 在「自定义 > 技能」上传安装器生成的两个 ZIP，完全退出（⌘Q）并重新打开 Claude，新开对话 |
 
 将对应提示词发给本机的 WorkBuddy 或豆包工作。助手可执行本地安装；宿主界面的接入步骤若无法自动操作，会说明需要你完成的具体步骤。首次签名仍使用你自己的 Apple 账号和开发团队。
 
@@ -100,13 +101,42 @@ https://github.com/zhongerxin/iPhone-use
 需要我接管时，说明具体步骤并等我完成；不要照搬作者的设备标识或签名信息。
 ```
 
-如果工具没有加载，先确认连接器已启用，再新开会话 / 本地电脑任务。两个宿主同时使用同一部手机时，按共享操作锁的提示等待，避免同时操作。详细安装、更新和排查步骤见上表链接。
+### 在 Claude 桌面端安装
+
+Claude 对话里的代码执行在云端沙箱，不能在这台 Mac 上运行安装器，所以安装在终端完成：
+
+```sh
+git clone https://github.com/zhongerxin/iPhone-use.git
+cd iPhone-use
+python3 claude/install.py
+```
+
+也可以把下面的提示词发给 Claude 桌面端的 Code 标签页（Claude Code）或其他能在本机运行命令的助手：
+
+```text
+请在这台 Mac 上安装 iPhone Use，让 Claude 桌面端通过 USB 操作我的真实 iPhone：
+https://github.com/zhongerxin/iPhone-use
+
+先读取 README.md、claude/README.md 和安装脚本，检查 Python、Node.js、npm、
+完整 Xcode 和 USB iPhone。克隆或复用本地源码，保留已有改动，
+在源码目录运行 python3 claude/install.py；不要运行 Codex 安装脚本。
+告诉我安装器输出的两个技能 ZIP 路径，以及在 Claude「自定义 > 技能」上传并启用它们、
+完全退出（⌘Q）后重新打开 Claude 的步骤。
+```
+
+重新打开 Claude 后，在新对话里输入：
+
+> 用 iphone-use-setup 帮我配置通过 USB 连接的 iPhone，验证 READY，然后显示手机屏幕。
+
+READY 后 Claude 会调用一次 `pua_screen()`，把实时画面显示在对话里。
+
+如果工具没有加载，先确认连接器已启用（Claude 桌面端在「设置 > 开发者」查看），再新开会话 / 本地电脑任务 / 对话。多个宿主同时使用同一部手机时，按共享操作锁的提示等待，避免同时操作。详细安装、更新和排查步骤见上表链接。
 
 ## 安装依赖
 
 | 依赖 | 用途 |
 | --- | --- |
-| macOS 与 Codex、WorkBuddy 或豆包工作 | 运行本地 MCP 服务与屏幕侧边栏；Codex 版安装另需 Codex CLI |
+| macOS 与 Codex、WorkBuddy、豆包工作或 Claude 桌面端 | 运行本地 MCP 服务与屏幕侧边栏；Codex 版安装另需 Codex CLI |
 | 完整 Xcode，已完成首次启动配置 | 编译、签名、部署和运行 WDA；仅 Command Line Tools 不够 |
 | 可在 Xcode 中使用的 Apple 账号和开发团队 | 签名手机端 WDA Runner |
 | USB 连接的真实 iPhone | 信任此 Mac，开启设备要求的开发者模式，安装与启动期间保持解锁 |
