@@ -62,6 +62,8 @@ class TextTests(unittest.TestCase):
         views = {tool["name"]: tool["_meta"]["ui"]["resourceUri"] for tool in upstream.TOOLS if tool.get("_meta", {}).get("ui", {}).get("resourceUri")}
         self.assertEqual(views, {"pua_screen": upstream.SCREEN_URI})
         self.assertRegex(upstream.SCREEN_URI, r"^ui://iphone-use/phone-[\d.]+-claude-[0-9a-f]{8}\.html$")
+        screen = next(tool for tool in upstream.TOOLS if tool["name"] == "pua_screen")
+        self.assertEqual(screen["_meta"]["ui/resourceUri"], upstream.SCREEN_URI)
         self.assertEqual(upstream.SCREEN_META["ui"]["csp"]["connectDomains"], [])
         # The toolbar's own calls stay visible to the view only.
         app_only = {tool["name"] for tool in upstream.TOOLS if tool.get("_meta", {}).get("ui", {}).get("visibility") == ["app"]}
@@ -147,6 +149,10 @@ class HostTests(unittest.TestCase):
         opens = [tool["_meta"]["ui"]["resourceUri"] for tool in host.ask("tools/list")["result"]["tools"] if tool.get("_meta", {}).get("ui", {}).get("resourceUri")]
         self.assertEqual(listed, opens)
         self.assertRegex(listed[0], r"-claude-[0-9a-f]{8}\.html$")
+        page = host.ask("resources/read", {"uri": listed[0]})["result"]["contents"][0]
+        self.assertEqual(page["mimeType"], "text/html;profile=mcp-app")
+        screen = next(tool for tool in host.ask("tools/list")["result"]["tools"] if tool["name"] == "pua_screen")
+        self.assertEqual(screen["_meta"]["ui/resourceUri"], listed[0])
         deadline = time.monotonic() + 8
         while time.monotonic() < deadline:
             frame = host.frame()["result"]["structuredContent"]["frame"]
@@ -231,7 +237,7 @@ class InstallTests(unittest.TestCase):
 
     def test_a_server_or_directory_of_someone_elses_is_left_alone(self):
         self.config.write_text(json.dumps({"mcpServers": {"iphone_use": {"command": "python3", "args": ["/elsewhere/server/iphone_use.py"]}}}))
-        with self.assertRaises(installer.InstallError):
+        with self.assertRaisesRegex(installer.InstallError, "/elsewhere/server/iphone_use.py"):
             self.install()
         self.assertFalse(self.install_dir.exists())
         self.install(force=True)

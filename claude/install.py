@@ -92,7 +92,10 @@ def install(install_dir, config_path, python, analytics=False, force=False):
     config = shared.read_config(config_path)
     servers = config.setdefault("mcpServers", {})
     if SERVER in servers and not shared.ours(servers[SERVER], install_dir) and not force:
-        raise InstallError(f"{config_path} already has a different '{SERVER}' server. Remove it or pass --force.")
+        found = servers[SERVER]
+        found = {key: found.get(key) for key in ("command", "args")} if isinstance(found, dict) else found
+        raise InstallError(f"{config_path} already has a different '{SERVER}' server: {json.dumps(found, ensure_ascii=False)}\n"
+                           "Remove it, or pass --force to replace it (a backup of the file is kept).")
     entry = server_entry(install_dir, python, analytics)
     with tempfile.TemporaryDirectory(prefix="iphone-use-stage-") as staging:
         staged = Path(staging) / NAME
